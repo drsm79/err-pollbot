@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from errbot.utils import get_jid_from_message, drawbar
+from errbot.utils import drawbar
 
 # Backward compatibility
 from errbot.version import VERSION
@@ -155,7 +155,7 @@ class PollBot(BotPlugin):
             return u'Option not found. Use !poll show to see all options of the current poll.'
 
         usernames = poll[1]
-        username = get_jid_from_message(mess)
+        username = mess.getMuckNick()
 
         if username in usernames:
             return u'You have already voted.'
