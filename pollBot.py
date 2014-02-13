@@ -4,22 +4,24 @@ from errbot.utils import drawbar
 # Backward compatibility
 from errbot.version import VERSION
 from errbot.utils import version2array
-if version2array(VERSION) >= [1,6,0]:
+if version2array(VERSION) >= [1, 6, 0]:
     from errbot import botcmd, BotPlugin
 else:
     from errbot.botplugin import BotPlugin
     from errbot.jabberbot import botcmd
 
 
-# The polls are stored in the shelf. The root of the shelf is a dictionary, where K = name of the poll and V = the poll data.
+# The polls are stored in the shelf. The root of the shelf is a dictionary,
+# where K = name of the poll and V = the poll data.
 # This data itself is a tuple of a dictionary and a list: ({}, [])
-#   In this dictionary the keys are the poll options and the values are the number of votes.
+#   In this dictionary the keys are the poll options and the values are the
+#   nummber of votes.
 #   The list stores the names of the users who already voted.
 
 
 class PollBot(BotPlugin):
 
-    min_err_version = '1.2.1' # it needs split_args
+    min_err_version = '1.2.1'  # it needs split_args
     active_poll = None
 
     @botcmd
@@ -58,13 +60,19 @@ class PollBot(BotPlugin):
             del self[title]
             return u'Poll removed.'
         except KeyError:
-            return u'That poll does not exist. Use !poll list to see all polls.'
+            msg = u'That poll does not exist. Use !poll list to see all polls.'
+            return msg
 
     @botcmd
     def poll_list(self, mess, args):
         """List all polls."""
         if len(self) > 0:
-            return u'All Polls:\n' + u'\n'.join([title + (u' *' if title == PollBot.active_poll else u'') for title in self])
+            return u'All Polls:\n' + u'\n'.join(
+                [
+                    title + (u' *' if title == PollBot.active_poll else u'')
+                    for title in self
+                ]
+            )
         else:
             return u'No polls found. Use !poll new to add one.'
 
@@ -72,7 +80,8 @@ class PollBot(BotPlugin):
     def poll_start(self, mess, args):
         """Start a saved poll."""
         if PollBot.active_poll is not None:
-            return u'"%s" is currently running, use !poll stop to finish it.' % PollBot.active_poll
+            msg = u'"%s" is currently running, use !poll stop to finish it.'
+            return msg % PollBot.active_poll
 
         title = args
 
@@ -147,12 +156,15 @@ class PollBot(BotPlugin):
 
         index = int(index)
         if index > len(options) or index < 1:
-            return u'Please choose a number between 1 and %d (inclusive).' % len(options)
+            msg = u'Please choose a number between 1 and %d (inclusive).'
+            return msg % len(options)
 
         option = options.keys()[index - 1]
 
         if not option in options:
-            return u'Option not found. Use !poll show to see all options of the current poll.'
+            msg = u'Option not found.'
+            msg += u'Use !poll show to see all options of the current poll.'
+            return msg
 
         usernames = poll[1]
         username = mess.getMuckNick()
@@ -175,7 +187,12 @@ class PollBot(BotPlugin):
         result = PollBot.active_poll + u'\n'
         index = 1
         for option in poll[0]:
-            result += u'%s %d. %s (%d votes)\n' % (drawbar(poll[0][option], total_votes), index, option, poll[0][option])
+            result += u'%s %d. %s (%d votes)\n' % (
+                drawbar(poll[0][option], total_votes),
+                index,
+                option,
+                poll[0][option]
+            )
             index += 1
 
         return result.strip()
