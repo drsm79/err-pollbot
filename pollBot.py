@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from errbot.utils import drawbar
-
 # Backward compatibility
 from errbot.version import VERSION
 from errbot.utils import version2array
@@ -19,6 +16,16 @@ else:
 #   The list stores the names of the users who already voted.
 
 
+def drawbar(value, max):
+    BAR_WIDTH = 15.0
+    if max:
+        value_in_chr = int(round((value * BAR_WIDTH / max)))
+    else:
+        value_in_chr = 0
+    return '[' + '=' * value_in_chr + \
+        '-' * int(round(BAR_WIDTH - value_in_chr)) + ']'
+
+
 class PollBot(BotPlugin):
 
     min_err_version = '1.2.1'  # it needs split_args
@@ -35,10 +42,10 @@ class PollBot(BotPlugin):
         title = args
 
         if not title:
-            return u'usage: !poll new <poll_title>'
+            return 'usage: ^poll new <poll_title>'
 
         if title in self:
-            return u'A poll with that title already exists.'
+            return 'A poll with that title already exists.'
 
         poll = ({}, [])
         self[title] = poll
@@ -46,7 +53,7 @@ class PollBot(BotPlugin):
         if not PollBot.active_poll:
             PollBot.active_poll = title
 
-        return u'Poll created. Use !poll option to add options.'
+        return 'Poll created. Use ^poll option to add options.'
 
     @botcmd
     def poll_remove(self, mess, args):
@@ -54,42 +61,42 @@ class PollBot(BotPlugin):
         title = args
 
         if not title:
-            return u'usage: !poll remove <poll_title>'
+            return 'usage: ^poll remove <poll_title>'
 
         try:
             del self[title]
-            return u'Poll removed.'
+            return 'Poll removed.'
         except KeyError:
-            msg = u'That poll does not exist. Use !poll list to see all polls.'
+            msg = 'That poll does not exist. Use ^poll list to see all polls.'
             return msg
 
     @botcmd
     def poll_list(self, mess, args):
         """List all polls."""
         if len(self) > 0:
-            return u'All Polls:\n' + u'\n'.join(
+            return 'All Polls:\n' + '\n'.join(
                 [
-                    title + (u' *' if title == PollBot.active_poll else u'')
+                    title + (' *' if title == PollBot.active_poll else '')
                     for title in self
                 ]
             )
         else:
-            return u'No polls found. Use !poll new to add one.'
+            return 'No polls found. Use ^poll new to add one.'
 
     @botcmd
     def poll_start(self, mess, args):
         """Start a saved poll."""
         if PollBot.active_poll is not None:
-            msg = u'"%s" is currently running, use !poll stop to finish it.'
+            msg = '"%s" is currently running, use ^poll stop to finish it.'
             return msg % PollBot.active_poll
 
         title = args
 
         if not title:
-            return u'usage: !poll start <poll_title>'
+            return 'usage: ^poll start <poll_title>'
 
         if not title in self:
-            return u'Poll not found. Use !poll list to see all polls.'
+            return 'Poll not found. Use ^poll list to see all polls.'
 
         self.reset_poll(title)
         PollBot.active_poll = title
@@ -99,7 +106,7 @@ class PollBot(BotPlugin):
     @botcmd
     def poll_stop(self, mess, args):
         """Stop the currently running poll."""
-        result = u'Poll finished, final results:\n'
+        result = 'Poll finished, final results:\n'
         result += self.format_poll(PollBot.active_poll)
 
         self.reset_poll(PollBot.active_poll)
@@ -113,27 +120,27 @@ class PollBot(BotPlugin):
         option = args
 
         if not PollBot.active_poll:
-            return u'No active poll. Use !poll start to start a poll.'
+            return 'No active poll. Use ^poll start to start a poll.'
 
         if not option:
-            return u'usage: !poll option add <poll_option>'
+            return 'usage: ^poll option add <poll_option>'
 
         poll = self[PollBot.active_poll]
 
         if option in poll[0]:
-            return u'Option already exists. Use !poll show to see all options.'
+            return 'Option already exists. Use ^poll show to see all options.'
 
         poll[0][option] = 0
         self[PollBot.active_poll] = poll
 
         return self.format_poll(PollBot.active_poll)
-        #return u'Added \'%s\' to poll.' % option
+        #return 'Added \'%s\' to poll.' % option
 
     @botcmd
     def poll_show(self, mess, args):
         """Show the currently running poll."""
         if not PollBot.active_poll:
-            return u'No active poll. Use !poll start to start a poll.'
+            return 'No active poll. Use ^poll start to start a poll.'
 
         return self.format_poll(PollBot.active_poll)
 
@@ -141,36 +148,36 @@ class PollBot(BotPlugin):
     def poll_vote(self, mess, args):
         """Vote for the currently running poll."""
         if not PollBot.active_poll:
-            return u'No active poll. Use !poll start to start a poll.'
+            return 'No active poll. Use ^poll start to start a poll.'
 
         index = args
 
         if not index:
-            return u'usage: !poll vote <option_number>'
+            return 'usage: ^poll vote <option_number>'
 
         if not index.isdigit():
-            return u'Please vote using the numerical index of the option.'
+            return 'Please vote using the numerical index of the option.'
 
         poll = self[PollBot.active_poll]
         options = poll[0]
 
         index = int(index)
         if index > len(options) or index < 1:
-            msg = u'Please choose a number between 1 and %d (inclusive).'
+            msg = 'Please choose a number between 1 and %d (inclusive).'
             return msg % len(options)
 
         option = options.keys()[index - 1]
 
         if not option in options:
-            msg = u'Option not found.'
-            msg += u'Use !poll show to see all options of the current poll.'
+            msg = 'Option not found.'
+            msg += 'Use ^poll show to see all options of the current poll.'
             return msg
 
         usernames = poll[1]
         username = mess.getMuckNick()
 
         if username in usernames:
-            return u'You have already voted.'
+            return 'You have already voted.'
 
         usernames.append(username)
 
@@ -184,10 +191,10 @@ class PollBot(BotPlugin):
 
         total_votes = sum(poll[0].values())
 
-        result = PollBot.active_poll + u'\n'
+        result = PollBot.active_poll + '\n'
         index = 1
         for option in poll[0]:
-            result += u'%s %d. %s (%d votes)\n' % (
+            result += '%s %d. %s (%d votes)\n' % (
                 drawbar(poll[0][option], total_votes),
                 index,
                 option,
